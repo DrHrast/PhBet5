@@ -1,0 +1,141 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using PhBet5.Models
+@using PhBet5.Services
+ 
+<h1>Prijava ili registracija</h1>
+ 
+<div class="main-view">
+    <div class="login-view">
+ 
+        
+        <EditForm Model="this" OnValidSubmit="Login" FormName="LoginForm">
+            <div>
+                <label for="userName">Korisničko ime:</label>
+                <InputText id="userName" class="form-control" @bind-Value="loginUsername" />
+            </div>
+            <div>
+                <label for="password" class="mt-2">Lozinka:</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="loginPassword" />
+            </div>
+            <div>
+                <button type="submit" class="btn-accent mt-4">Prijava</button>
+            </div>
+        </EditForm>
+ 
+        <p>______________________________________________________________________________</p>
+
+        <EditForm Model="registrationModel" OnValidSubmit="Register" FormName="RegistrationForm">
+        <DataAnnotationsValidator />
+            <div>
+                <label for="userName">Korisničko ime:</label>
+                <InputText id="userName" class="form-control" @bind-Value="registrationModel.UserName" />
+                <ValidationMessage For="() => registrationModel.UserName" />
+            </div>
+            <div>
+                <label for="email">Email:</label>
+                <InputText id="email" type="email" class="form-control" @bind-Value="registrationModel.Email" />
+                <ValidationMessage For="() => registrationModel.Email" />
+            </div>
+            <div>
+                <label for="password" class="mt-2">Lozinka:</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="registrationModel.Password" />
+                <ValidationMessage For="() => registrationModel.Password" />
+            </div>
+            <div>
+                <label for="passwordConfirm" class="mt-2">Ponovljena lozinka:</label>
+                <InputText id="passwordConfirm" type="password" class="form-control" @bind-Value="registrationModel.ConfirmPassword" />
+                <ValidationMessage For="() => registrationModel.ConfirmPassword" />
+            </div>
+            <div>
+                <button type="submit" class="btn-accent mt-4">Register</button>
+            </div>
+        </EditForm>
+ 
+    </div>
+</div>
+ 
+ 
+@if (IsErrorMessageVisible)
+{
+<p style="color:red">@ErrorMessage</p>
+}
+ 
+@code {
+
+    [Inject] private NavigationManager NavManager { get; set; }
+    [Inject] private LoggedInUserModel LoggedInUser { get; set; }
+
+    [SupplyParameterFromForm] private string loginUsername { get; set; }
+    [SupplyParameterFromForm] private string loginPassword { get; set; }
+
+    [SupplyParameterFromForm] private RegistrationModel registrationModel { get; set; } = new();
+
+    [Inject]
+    private UserService userService { get; set; }
+
+    private bool IsErrorMessageVisible { get; set; }
+    private string ErrorMessage { get; set; }
+    private bool IsRegistered { get; set; } = true;
+
+    private void Login()
+    {
+        try
+        {
+            var result = userService.Login(loginUsername, loginPassword);
+            if (result != null)
+            {
+                LoggedInUser.Id = result.Id;
+                NavManager.NavigateTo("/bet-placement");
+            }
+            else
+            {
+                IsErrorMessageVisible = true;
+                ErrorMessage = "Korisničko ime ili lozinka nisu točni.";
+                loginUsername = "";
+                loginPassword = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+            throw;
+        }
+    }
+
+    private void Register()
+    {
+        try
+        {
+            IsErrorMessageVisible = false;
+            ErrorMessage = "";
+
+            var result = userService.GetUser(registrationModel.UserName);
+            if (result is not null)
+            {
+                IsErrorMessageVisible = true;
+                ErrorMessage = "Korisničko ime već postoji!";
+                return;
+            }
+
+            var user = new UserModel
+                {
+                    UserName = registrationModel.UserName,
+                    Password = registrationModel.Password,
+                    Email = registrationModel.Email
+                };
+
+            userService.CreateUser(user);
+            IsRegistered = true;
+            var result2 = userService.Login(user.UserName, user.Password);
+            LoggedInUser.Id = result2.Id;
+            NavManager.NavigateTo("/bet-placement");
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+            throw;
+        }
+    }
+}

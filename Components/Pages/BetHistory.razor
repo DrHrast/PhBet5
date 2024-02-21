@@ -1,0 +1,116 @@
+﻿@page "/bet-history"
+@rendermode InteractiveServer
+
+@using PhBet5.Models
+@using PhBet5.Services
+
+<h3>User info</h3>
+<div>
+    <div>
+        <label for="userName">User Name: </label>
+        <span>@loggedUserModel.User.UserName</span>
+    </div>
+    <div>
+        <label for="amount">User Balance: </label>
+        <span>@loggedUserModel.User.Balance</span>
+    </div>
+</div><br />
+
+<button type="submit" class="btn btn-primary" @onclick="() => BetList()">View Bet List</button>
+<button type="submit" class="btn btn-primary" @onclick="() => ReloadData()">Reload Bet Data</button>
+
+<h3>BetHistory</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Bet name</th>
+            <th>Date of the game</th>
+            <th>Amount placed</th>
+            <th>Bet Placed</th>
+            <th>Game Finished</th>
+            <th>Bet Won</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bet in userBets)
+        {
+            <tr>
+                <td>@bet.BetName</td>
+                <td>@DateFormat(bet)</td>
+                <td>@bet.BetAmount</td>
+                <td>@DateFormat1(bet)</td>
+                <td>@FinishedFormat(bet)</td>
+                <td>@WinFormat(bet)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Inject] private NavigationManager NavManager { get; set; }
+    [Inject] private LoggedInUserModel loggedUserModel { get; set; }
+    [Inject] private UserBettingService userBettingService { get; set; }
+    [Inject] private UserBettingModel bettingModel { get; set; }
+    [Inject] private BetsService betsService { get; set; }
+    [Inject] private BetsModel betsModel { get; set; }
+
+    private List<UserBettingModel> userBets;
+
+    protected override void OnInitialized()
+    {
+        userBets = userBettingService.GetAll();
+        //CheckBetsForWin();
+    }
+
+    private string DateFormat(UserBettingModel bet)
+    {
+        return bet.GameDate.ToString("dd.MM.yyyy. HH:mm");
+    }
+
+    private string DateFormat1(UserBettingModel bet)
+    {
+        return bet.BetPlacedDate.ToString("dd.MM.yyyy. HH:mm");
+    }
+
+    private string FinishedFormat(UserBettingModel bet)
+    {
+        if (bet.IsFinished)
+        {
+
+            TimeSpan timeFinished = DateTime.Now - bet.GameDate;
+            if (timeFinished.Days >= 1)
+            {
+                return $"Game finished {timeFinished.Days} days ago";
+            } 
+            else if (timeFinished.Days < 1 && timeFinished.Days > 0)
+            {
+                return $"Game finished {timeFinished.Hours} hours and {timeFinished.Minutes} minutes ago";
+            }
+        }
+        return "In progress";
+    }
+
+    private string WinFormat(UserBettingModel bet)
+    {
+        if (bet.IsWon)
+        {
+            return "Win";
+        }
+        return "Lose";
+    }
+
+    private void BetList()
+    {
+        NavManager.NavigateTo("/bet-placement");
+    }
+
+    private void ReloadData()
+    {
+        foreach (var bet in userBets) 
+        {
+            if (bet.GameDate < DateTime.Now) bettingModel.IsFinished = true;
+            if (bet.IsFinished) loggedUserModel.User.Balance += bet.BetAmount * 2;
+        }
+    }
+}

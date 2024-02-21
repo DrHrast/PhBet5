@@ -1,0 +1,125 @@
+﻿@page "/bet-placement"
+@rendermode InteractiveServer
+
+@using PhBet5.Models
+@using PhBet5.Services
+
+<h3>User info</h3>
+<div>
+    <div>
+        <label for="userName">User Name: </label>
+        <span>@loggedUserModel.User.UserName</span>
+    </div>
+    <div>
+        <label for="amount">User Balance: </label>
+        <span>@loggedUserModel.User.Balance</span>
+    </div>
+</div>
+
+<h2>Look at your placed bets</h2>
+<button type="submit" class="btn btn-primary" @onclick="() => BetHistoryPage()">View History</button>
+<br />
+
+<h1>List of bets.</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Sport</th>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Ratio</th>
+            <th>Bet Date</th>
+            <th>Time Remaining</th>
+            <th>Betting Amount</th>
+            <th>Place a Bet</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bet in bets)
+        {
+            <tr>
+                <td>@bet.BetSport</td>
+                <td>@bet.BetTeam1 <InputCheckbox @bind-Value="@bet.Team1Selected" /></td>
+                <td>@bet.BetTeam2 <InputCheckbox @bind-Value="@bet.Team2Selected" /></td>
+                <td>@bet.BetRatio</td>
+                <td>@DateFormat(bet)</td>
+                <td>@GetTimeRemaining(bet.BetDate)</td>
+                <td>
+                    <InputNumber id="amount" @bind-Value="@bet.BetAmount" />
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-primary" @onclick="() => PlaceBet(bet)">Bet!</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Inject] private NavigationManager NavManager { get; set; }
+    [Inject] private LoggedInUserModel loggedUserModel { get; set; }
+    [Inject] private UserBettingService userBettingService { get; set; }
+    [Inject] private UserService userService { get; set; }
+    [Inject] private UserBettingModel bettingModel { get; set; }
+    [Inject] private BetsService betsService { get; set; }
+    [Inject] private BetsModel betsModel { get; set; }
+
+    private List<BetsModel> bets;
+    private bool team1Selected;
+    private bool team2Selected;
+    private double betAmount = 0;
+
+    protected override void OnInitialized()
+    {
+        bets = betsService.GetAll();
+        loggedUserModel.BettingDetails = userBettingService.GetUserBettingDetails(loggedUserModel.Id);
+        loggedUserModel.User = userService.GetUser(loggedUserModel.Id);
+    }
+
+    private string GetTimeRemaining(DateTime betDate)
+    {
+        TimeSpan timeRemaining = betDate - DateTime.Now;
+        if (timeRemaining.Days > 0)
+        {
+            return $"{timeRemaining.Days} days, {timeRemaining.Hours}:{timeRemaining.Minutes}";
+        }
+        return $"{timeRemaining.Hours}:{timeRemaining.Minutes}";
+    }
+
+    private string DateFormat(BetsModel bet)
+    {
+        return bet.BetDate.ToString("dd.MM.yyyy. HH:mm");
+    }
+
+    private async Task PlaceBet(BetsModel selectedBet)
+    {
+        // Your logic to place the bet using selectedBet and betAmount
+        // For example:
+        bettingModel = new UserBettingModel
+            {
+                UserId = loggedUserModel.Id,
+                BetId = selectedBet.BetId,
+                BetAmount = selectedBet.BetAmount,
+                Team1Selected = selectedBet.Team1Selected,
+                Team2Selected = selectedBet.Team2Selected,
+                BetPlacedDate = DateTime.Now,
+                BetName = $"{selectedBet.BetTeam1} vs {selectedBet.BetTeam2}",
+                GameDate = selectedBet.BetDate,
+                IsFinished = selectedBet.BetDate < DateTime.Now ? true : false,
+                IsWon = false //kasnije dodati nakon checkboxova
+            };
+
+        // Call a service method to save the betting details
+        userBettingService.CreateBet(bettingModel);
+
+        // Update the user's betting details
+        loggedUserModel.BettingDetails = userBettingService.GetUserBettingDetails(loggedUserModel.Id);
+    }
+
+    public void BetHistoryPage()
+    {
+        NavManager.NavigateTo("/bet-history");
+    }
+
+}
