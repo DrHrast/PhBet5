@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PhBet5.Migrations;
+using System.ComponentModel.DataAnnotations;
 
 namespace PhBet5.Models
 {

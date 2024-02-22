@@ -4,101 +4,106 @@
 @using PhBet5.Models
 @using PhBet5.Services
 
-<h3>User info</h3>
-<div>
-    <div>
-        <label for="userName">User Name: </label>
-        <span>@loggedUserModel.User.UserName</span>
-    </div>
-    <div>
-        <label for="amount">User Balance: </label>
-        <span>@loggedUserModel.User.Balance</span>
-    </div>
-</div><br />
+<style>
+    .header {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
 
-<button type="submit" class="btn btn-primary" @onclick="() => BetList()">View Bet List</button>
-<button type="submit" class="btn btn-primary" @onclick="() => ReloadData()">Reload Bet Data</button>
+    .error-message {
+        color: red;
+    }
 
-<h3>BetHistory</h3>
+    .bet-table {
+        background-color: #585952;
+        margin-left: 5%;
+        margin-right: 5%;
+    }
 
-<table>
-    <thead>
-        <tr>
-            <th>Bet name</th>
-            <th>Date of the game</th>
-            <th>Amount placed</th>
-            <th>Bet Placed</th>
-            <th>Game Finished</th>
-            <th>Bet Won</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var bet in userBets)
-        {
-            <tr>
-                <td>@bet.BetName</td>
-                <td>@DateFormat(bet)</td>
-                <td>@bet.BetAmount</td>
-                <td>@DateFormat1(bet)</td>
-                <td>@FinishedFormat(bet)</td>
-                <td>@WinFormat(bet)</td>
-            </tr>
+        .bet-table th {
+            background-color: #3d3d3d;
+            border: 2px solid black;
+            text-align: center;
         }
-    </tbody>
-</table>
+
+        .bet-table td {
+            background-color: #585952;
+            border: 1px solid black;
+            text-align: center;
+        }
+</style>
+
+<div class="col text-center">
+    <div class="row text-center" style="margin-top: 3px; margin-bottom: 5px">
+        <div class="col">
+            <button class="btn btn-primary" style="background-color: #3d3d3d; color: #b39e66; border-color: #b39e66;" @onclick="BetList">View Bet List</button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary" style="background-color: #3d3d3d; color: #b39e66; border-color: #b39e66;" @onclick="ReloadData">Reload Bet Data</button>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 6px">
+        <h2 class="header">BET HISTORY:</h2>
+    </div>
+    @if (userBets != null)
+    {
+        <div class="row text-center bet-table">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Bet name</th>
+                        <th>Date of the game</th>
+                        <th>Amount placed</th>
+                        <th>Bet Placed</th>
+                        <th>Game Finished</th>
+                        <th>Bet Won</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bet in userBets.Where(x => x.UserId == loggedUserModel.Id))
+                    {
+                        <tr>
+                            <td>@bet.BetName</td>
+                            <td>@bet.GameDateAsString</td>
+                            <td>@bet.BetAmount</td>
+                            <td>@bet.BetPlaceDateAsString</td>
+                            <td>@bet.FinishedState</td>
+                            <td>@bet.BetState</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
 
 @code {
     [Inject] private NavigationManager NavManager { get; set; }
     [Inject] private LoggedInUserModel loggedUserModel { get; set; }
     [Inject] private UserBettingService userBettingService { get; set; }
-    [Inject] private UserBettingModel bettingModel { get; set; }
     [Inject] private BetsService betsService { get; set; }
-    [Inject] private BetsModel betsModel { get; set; }
+    [Inject] private GameScoreService gameScoreService { get; set; }
+    [Inject] private UserService userService { get; set; }
+
+    private UserBettingModel bettingModel { get; set; } = new();  // ovo sam mislio izbrisat jer se bas ne koristi, al mozda postoje planovi za to :)
+    private BetsModel betsModel { get; set; } = new();
+    private GameScoreModel gameScoreModel { get; set; } = new();
+    [SupplyParameterFromForm] private UserModel user { get; set; } = new();
 
     private List<UserBettingModel> userBets;
 
-    protected override void OnInitialized()
+    protected override void OnAfterRender(bool firstRender)
     {
-        userBets = userBettingService.GetAll();
-        //CheckBetsForWin();
-    }
-
-    private string DateFormat(UserBettingModel bet)
-    {
-        return bet.GameDate.ToString("dd.MM.yyyy. HH:mm");
-    }
-
-    private string DateFormat1(UserBettingModel bet)
-    {
-        return bet.BetPlacedDate.ToString("dd.MM.yyyy. HH:mm");
-    }
-
-    private string FinishedFormat(UserBettingModel bet)
-    {
-        if (bet.IsFinished)
+        if (firstRender)
         {
-
-            TimeSpan timeFinished = DateTime.Now - bet.GameDate;
-            if (timeFinished.Days >= 1)
-            {
-                return $"Game finished {timeFinished.Days} days ago";
-            } 
-            else if (timeFinished.Days < 1 && timeFinished.Days > 0)
-            {
-                return $"Game finished {timeFinished.Hours} hours and {timeFinished.Minutes} minutes ago";
-            }
+            ReloadData();
+            //CheckBetsForWin();
+            firstRender = false;
+            StateHasChanged();
+            base.OnAfterRender(firstRender);
         }
-        return "In progress";
     }
 
-    private string WinFormat(UserBettingModel bet)
-    {
-        if (bet.IsWon)
-        {
-            return "Win";
-        }
-        return "Lose";
-    }
 
     private void BetList()
     {
@@ -107,10 +112,35 @@
 
     private void ReloadData()
     {
-        foreach (var bet in userBets) 
+        userBets = userBettingService.GetUserBettingDetails(loggedUserModel.Id);
+        foreach (var bet in userBets)
         {
-            if (bet.GameDate < DateTime.Now) bettingModel.IsFinished = true;
-            if (bet.IsFinished) loggedUserModel.User.Balance += bet.BetAmount * 2;
+            if (!bet.IsCalculated)
+            {
+                var isFinished = bet.GameDate < DateTime.Now;
+                if (isFinished)
+                {
+                    bet.IsFinished = true;
+
+                    if (bet.Team1Selected)
+                    {
+                        bet.IsWon = gameScoreService.GetTeamOneWon(bet.BetId);
+                    }
+                    else
+                    {
+                        bet.IsWon = gameScoreService.GetTeamTwoWon(bet.BetId);
+                    }
+                    loggedUserModel.Balance += bet.IsWon == true ? bet.BetAmount * betsService.GetBet(bet.BetId).BetRatio : 0;
+                    bet.IsCalculated = true;
+                }
+            }
+            user.UserName = loggedUserModel.UserName;
+            user.Password = loggedUserModel.Password;
+            user.Balance = loggedUserModel.Balance;
+            userService.UpdateUser(loggedUserModel.Id, user);
+            userBettingService.UpdateBet(loggedUserModel.Id, bet);
         }
     }
 }
+
+

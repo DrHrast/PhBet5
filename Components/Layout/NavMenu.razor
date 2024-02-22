@@ -1,0 +1,87 @@
+﻿@rendermode InteractiveServer
+
+@using PhBet5.Models
+
+
+<style>
+    .accordion-header {
+        background-color: #3d3d3d;
+        border-radius: 10px;
+    }
+
+    .logo-container {
+        text-align: center;
+    }
+
+    .logo-img {
+        border-radius: 10px;
+        margin-top: 8px;
+        margin-bottom: 10px;
+    }
+
+    .user-info {
+        padding: 20px;
+    }
+</style>
+
+<div class="accordion-header">
+    <div class="row">
+        <div class="col text-center logo-container">
+            <img src="Images/PHBet5_Logo.png" alt="PHBet5 Logo" width="170px" height="100px" class="logo-img" />
+        </div>
+    </div>
+
+    <div style="position: absolute; top: 0.5cm; right: 0.5cm;">
+        @if (CurrentPage != NavManager.BaseUri && CurrentPage != NavManager.BaseUri + "#")
+        {
+            <button class="btn btn-primary" style="background-color: #3d3d3d; color: #b39e66; border-color: #b39e66;" @onclick="Logout">
+                Odjava
+            </button>
+        }
+    </div>
+</div>
+
+<div class="user-info">
+    @if (CurrentPage != NavManager.BaseUri && CurrentPage != NavManager.BaseUri + "#")
+    {
+        <h3>User info:</h3>
+        <div>
+            <div>
+                <label for="userName">User Name: </label>
+                <span>@LoggedInUser.UserName</span>
+            </div>
+            <div>
+                <label for="amount">User Balance: </label>
+                <span>@LoggedInUser.Balance €</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] private NavigationManager NavManager { get; set; }
+    [Inject] private LoggedInUserModel LoggedInUser { get; set; }
+
+    private string CurrentPage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CurrentPage = NavManager.Uri;
+        NavManager.LocationChanged += HandleLocationChanged;
+        LoggedInUser.propertyChanged += async (_, _) => await InvokeAsync(StateHasChanged);
+    }
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        CurrentPage = e.Location;
+        StateHasChanged();
+    }
+
+
+    private void Logout()
+    {
+        LoggedInUser.Reset();
+        NavManager.NavigateTo("/");
+    }
+
+
+}

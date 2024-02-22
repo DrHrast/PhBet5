@@ -4,98 +4,144 @@
 @using PhBet5.Models
 @using PhBet5.Services
 
-<h3>User info</h3>
-<div>
-    <div>
-        <label for="userName">User Name: </label>
-        <span>@loggedUserModel.User.UserName</span>
-    </div>
-    <div>
-        <label for="amount">User Balance: </label>
-        <span>@loggedUserModel.User.Balance</span>
+<style>
+    .header {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .error-message {
+        color: red;
+    }
+
+    .bet-table {
+        background-color: #585952;
+        margin-left: 3%;
+        margin-right: 3%;
+    }
+
+        .bet-table th {
+            background-color: #3d3d3d;
+            border: 2px solid black;
+            text-align: center;
+        }
+
+        .bet-table td {
+            background-color: #585952;
+            border: 1px solid black;
+            text-align: center;
+        }
+</style>
+
+<br />
+<h2 class="header">LOOK AT BETS YOU PLACED</h2>
+<button class="btn btn-primary" style="background-color: #3d3d3d; color: #b39e66; border-color: #b39e66;" @onclick="BetHistoryPage">View History</button>
+<br />
+
+<div class="col text-center">
+    <h1 class="header">LIST OF BETS:</h1>
+
+    <div class="row text-center bet-table">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Sport</th>
+                    <th>Team 1</th>
+                    <th>Team 2</th>
+                    <th>Ratio</th>
+                    <th>Bet Date</th>
+                    <th>Time Remaining</th>
+                    <th>Betting Amount</th>
+                    <th>Place a Bet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bet in bets)
+                {
+                    <tr>
+                        <td>@bet.BetSport</td>
+                        <td>@bet.BetTeam1 <InputCheckbox @bind-Value="@bet.Team1Selected" @onclick="() => SelectTeam(bet, 1)" checked="false" /></td>
+                        <td>@bet.BetTeam2 <InputCheckbox @bind-Value="@bet.Team2Selected" @onclick="() => SelectTeam(bet, 2)" checked="false" /></td>
+                        <td>@bet.BetRatio</td>
+                        <td>@bet.BetDateAsString</td>
+                        <td>@bet.TimeRemaining</td>
+                        <td>
+                            <InputNumber id="amount" @bind-Value="@bet.BetAmount"  />
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" style="background-color: #3d3d3d; color: #b39e66; border-color: #b39e66;" @onclick="() => { CheckAmount(bet); bet.BetAmount = 0; bet.Team1Selected = false; bet.Team2Selected = false;}">Bet!</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
-<h2>Look at your placed bets</h2>
-<button type="submit" class="btn btn-primary" @onclick="() => BetHistoryPage()">View History</button>
-<br />
-
-<h1>List of bets.</h1>
-
-<table>
-    <thead>
-        <tr>
-            <th>Sport</th>
-            <th>Team 1</th>
-            <th>Team 2</th>
-            <th>Ratio</th>
-            <th>Bet Date</th>
-            <th>Time Remaining</th>
-            <th>Betting Amount</th>
-            <th>Place a Bet</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var bet in bets)
-        {
-            <tr>
-                <td>@bet.BetSport</td>
-                <td>@bet.BetTeam1 <InputCheckbox @bind-Value="@bet.Team1Selected" /></td>
-                <td>@bet.BetTeam2 <InputCheckbox @bind-Value="@bet.Team2Selected" /></td>
-                <td>@bet.BetRatio</td>
-                <td>@DateFormat(bet)</td>
-                <td>@GetTimeRemaining(bet.BetDate)</td>
-                <td>
-                    <InputNumber id="amount" @bind-Value="@bet.BetAmount" />
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-primary" @onclick="() => PlaceBet(bet)">Bet!</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@if (IsErrorMessageVisible)
+{
+    <p class="error-message">@ErrorMessage</p>
+}
 
 @code {
     [Inject] private NavigationManager NavManager { get; set; }
     [Inject] private LoggedInUserModel loggedUserModel { get; set; }
     [Inject] private UserBettingService userBettingService { get; set; }
     [Inject] private UserService userService { get; set; }
-    [Inject] private UserBettingModel bettingModel { get; set; }
     [Inject] private BetsService betsService { get; set; }
-    [Inject] private BetsModel betsModel { get; set; }
+    [SupplyParameterFromForm] private UserModel user { get; set; } = new();
 
+    private UserBettingModel bettingModel { get; set; }
     private List<BetsModel> bets;
-    private bool team1Selected;
-    private bool team2Selected;
-    private double betAmount = 0;
+    private string ErrorMessage { get; set; }
+    private bool IsErrorMessageVisible { get; set; }
+
+    // private bool team1Selected;
+    // private bool team2Selected;
+    // private double betAmount = 0;
+
+    private void SelectTeam(BetsModel bet, int team)
+    {
+        switch (team)
+        {
+            case 1:
+                bet.Team1Selected = true;
+                bet.Team2Selected = false;
+                break;
+            case 2:
+                bet.Team1Selected = false;
+                bet.Team2Selected = true;
+                break;
+        }
+    }
 
     protected override void OnInitialized()
     {
         bets = betsService.GetAll();
-        loggedUserModel.BettingDetails = userBettingService.GetUserBettingDetails(loggedUserModel.Id);
-        loggedUserModel.User = userService.GetUser(loggedUserModel.Id);
     }
 
-    private string GetTimeRemaining(DateTime betDate)
+    private void CheckAmount(BetsModel selectedBet)
     {
-        TimeSpan timeRemaining = betDate - DateTime.Now;
-        if (timeRemaining.Days > 0)
+        try
         {
-            return $"{timeRemaining.Days} days, {timeRemaining.Hours}:{timeRemaining.Minutes}";
+            if (loggedUserModel.Balance > selectedBet.BetAmount)
+            {
+                PlaceBet(selectedBet);
+            }
+            else
+            {
+                IsErrorMessageVisible = true;
+                ErrorMessage = "No sufficient funds.";
+            }
         }
-        return $"{timeRemaining.Hours}:{timeRemaining.Minutes}";
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
     }
 
-    private string DateFormat(BetsModel bet)
+    private void PlaceBet(BetsModel selectedBet)
     {
-        return bet.BetDate.ToString("dd.MM.yyyy. HH:mm");
-    }
-
-    private async Task PlaceBet(BetsModel selectedBet)
-    {
-        // Your logic to place the bet using selectedBet and betAmount
-        // For example:
+        
         bettingModel = new UserBettingModel
             {
                 UserId = loggedUserModel.Id,
@@ -110,14 +156,16 @@
                 IsWon = false //kasnije dodati nakon checkboxova
             };
 
-        // Call a service method to save the betting details
         userBettingService.CreateBet(bettingModel);
 
-        // Update the user's betting details
-        loggedUserModel.BettingDetails = userBettingService.GetUserBettingDetails(loggedUserModel.Id);
+        loggedUserModel.Balance -= selectedBet.BetAmount;
+        user.UserName = loggedUserModel.UserName;
+        user.Password = loggedUserModel.Password;
+        user.Balance = loggedUserModel.Balance;
+        userService.UpdateUser(loggedUserModel.Id, user);
     }
 
-    public void BetHistoryPage()
+    private void BetHistoryPage()
     {
         NavManager.NavigateTo("/bet-history");
     }

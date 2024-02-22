@@ -17,14 +17,32 @@ namespace PhBet5.Services
             _context.SaveChanges();
         }
 
-        public UserBettingModel GetUserBettingDetails(int id)
+        public List<UserBettingModel> GetUserBettingDetails(int id)
         {
-            return _context.Betting.FirstOrDefault(b => b.Id == id);
+            return _context.Betting.Where(b => b.UserId == id).ToList();
         }
 
         public List<UserBettingModel> GetAll()
         {
             return _context.Betting.ToList();
+        }
+
+        public void UpdateBet(int id, UserBettingModel bet)
+        {
+            UserBettingModel user = _context.Betting.FirstOrDefault(bet => bet.UserId == id);
+
+            if (user != null)
+            {
+                user.IsCalculated = bet.IsCalculated;
+                user.IsWon = bet.IsWon;
+                user.IsFinished = bet.IsFinished;
+
+                _context.SaveChanges();
+            }
+            else
+            {
+                throw new ArgumentException("404: User not found.");
+            }
         }
     }
 }

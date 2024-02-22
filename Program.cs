@@ -10,26 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("BettingContext") ?? 
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("BettingContext") ??
 throw new InvalidOperationException("Connection string BettingContext not found")));
 
-builder.Services.AddScoped<UserModel>();
-
 builder.Services.AddScoped<UserService>();
-
 builder.Services.AddScoped<UserBettingService>();
-
 builder.Services.AddScoped<BetsService>();
-
-builder.Services.AddScoped<BetsModel>();
-
-builder.Services.AddScoped<List<BetsModel>>();
-
-builder.Services.AddScoped<UserBettingModel>();
-
+builder.Services.AddScoped<GameScoreService>();
+//builder.Services.AddScoped<BetsModel>();
+//builder.Services.AddScoped<UserBettingModel>();
 builder.Services.AddSingleton<LoggedInUserModel>();
 
-builder.Services.AddSingleton<UserBettingModel>();
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 

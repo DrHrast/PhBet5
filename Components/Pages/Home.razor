@@ -2,81 +2,145 @@
 @rendermode InteractiveServer
 @using PhBet5.Models
 @using PhBet5.Services
- 
-<h1>Prijava ili registracija</h1>
- 
-<div class="main-view">
-    <div class="login-view">
- 
-        
-        <EditForm Model="this" OnValidSubmit="Login" FormName="LoginForm">
-            <div>
-                <label for="userName">Korisničko ime:</label>
-                <InputText id="userName" class="form-control" @bind-Value="loginUsername" />
-            </div>
-            <div>
-                <label for="password" class="mt-2">Lozinka:</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="loginPassword" />
-            </div>
-            <div>
-                <button type="submit" class="btn-accent mt-4">Prijava</button>
-            </div>
-        </EditForm>
- 
-        <p>______________________________________________________________________________</p>
 
-        <EditForm Model="registrationModel" OnValidSubmit="Register" FormName="RegistrationForm">
-        <DataAnnotationsValidator />
-            <div>
-                <label for="userName">Korisničko ime:</label>
-                <InputText id="userName" class="form-control" @bind-Value="registrationModel.UserName" />
-                <ValidationMessage For="() => registrationModel.UserName" />
+
+<style>
+    .header {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .img-container {
+        margin-left: 30px;
+    }
+
+    .img-style {
+        margin-left: 30px;
+    }
+
+    .form-container {
+        border-bottom: 2px solid #b39e66;
+    }
+
+    .login-register {
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-accent {
+        background-color: #3d3d3d;
+        color: #b39e66;
+        border-color: #b39e66;
+    }
+
+    .error-message {
+        color: red;
+    }
+</style>
+
+<div class="row">
+    <div class="col">
+        <div class="col text-center header">
+            <h2>NICE PLACE TO SPEND YOUR MONEY!</h2>
+        </div>
+        <div class="row">
+            <div class="col text-center img-container">
+                <img src="Images/TennisSiluete.png" alt="Tennis" height="200px" width="200px" class="img-style" />
             </div>
-            <div>
-                <label for="email">Email:</label>
-                <InputText id="email" type="email" class="form-control" @bind-Value="registrationModel.Email" />
-                <ValidationMessage For="() => registrationModel.Email" />
+            <div class="col">
+                <h3 style="font-weight: bold; margin-top: 70px; color: #242424">Tennis</h3>
             </div>
-            <div>
-                <label for="password" class="mt-2">Lozinka:</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="registrationModel.Password" />
-                <ValidationMessage For="() => registrationModel.Password" />
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3 style="font-weight: bold; margin-top: 70px; margin-left: 200px; color: #242424">Football</h3>
             </div>
-            <div>
-                <label for="passwordConfirm" class="mt-2">Ponovljena lozinka:</label>
-                <InputText id="passwordConfirm" type="password" class="form-control" @bind-Value="registrationModel.ConfirmPassword" />
-                <ValidationMessage For="() => registrationModel.ConfirmPassword" />
+            <div class="col">
+                <img src="Images/FutballSiluete.png" alt="Football" height="200px" width="200px" class="img-style" />
             </div>
-            <div>
-                <button type="submit" class="btn-accent mt-4">Register</button>
+        </div>
+        <div class="row">
+            <div class="col text-center img-container">
+                <img src="Images/TableTennisSiluete2.png" alt="Table Tennis" height="200px" width="200px" class="img-style" />
             </div>
-        </EditForm>
- 
+            <div class="col">
+                <h3 style="font-weight: bold; margin-top: 70px; color: #242424">Table Tennis</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="form-container">
+            <h1 class="header">Login</h1>
+
+            <EditForm Model="this" OnValidSubmit="Login" FormName="LoginForm">
+                <div>
+                    <label for="userName">User name:</label>
+                    <InputText id="userName" class="form-control" @bind-Value="loginUsername" />
+                </div>
+                <div>
+                    <label for="password" class="mt-2">Password:</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="loginPassword" />
+                </div>
+                <div>
+                    <button style="margin-bottom: 25px;" type="submit" class="btn-accent mt-4">Login</button>
+                </div>
+            </EditForm>
+        </div>
+        <div style="margin-top: 25px">
+            <h1 class="header">Register</h1>
+
+            <EditForm Model="registrationModel" OnValidSubmit="Register" FormName="RegistrationForm">
+                <DataAnnotationsValidator />
+                <div>
+                    <label for="userName">User name:</label>
+                    <InputText id="userName" class="form-control" @bind-Value="registrationModel.UserName" />
+                    <ValidationMessage For="() => registrationModel.UserName" />
+                </div>
+                <div>
+                    <label for="email">E-mail:</label>
+                    <InputText id="email" type="email" class="form-control" @bind-Value="registrationModel.Email" />
+                    <ValidationMessage For="() => registrationModel.Email" />
+                </div>
+                <div>
+                    <label for="password" class="mt-2">Password:</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="registrationModel.Password" />
+                    <ValidationMessage For="() => registrationModel.Password" />
+                </div>
+                <div>
+                    <label for="passwordConfirm" class="mt-2">Repeat password:</label>
+                    <InputText id="passwordConfirm" type="password" class="form-control" @bind-Value="registrationModel.ConfirmPassword" />
+                    <ValidationMessage For="() => registrationModel.ConfirmPassword" />
+                </div>
+                <div>
+                    <button type="submit" class="btn-accent mt-4">Register</button>
+                </div>
+            </EditForm>
+        </div>
     </div>
 </div>
- 
- 
+
 @if (IsErrorMessageVisible)
 {
-<p style="color:red">@ErrorMessage</p>
+    <div class="row">
+        <div class="col"></div>
+        <div class="col">
+            <p class="error-message">@ErrorMessage</p>
+        </div>
+    </div>
 }
- 
+
 @code {
 
     [Inject] private NavigationManager NavManager { get; set; }
     [Inject] private LoggedInUserModel LoggedInUser { get; set; }
+    [Inject] private UserService userService { get; set; }
 
     [SupplyParameterFromForm] private string loginUsername { get; set; }
     [SupplyParameterFromForm] private string loginPassword { get; set; }
 
     [SupplyParameterFromForm] private RegistrationModel registrationModel { get; set; } = new();
 
-    [Inject]
-    private UserService userService { get; set; }
 
     private bool IsErrorMessageVisible { get; set; }
     private string ErrorMessage { get; set; }
-    private bool IsRegistered { get; set; } = true;
 
     private void Login()
     {
@@ -86,12 +150,16 @@
             if (result != null)
             {
                 LoggedInUser.Id = result.Id;
+                LoggedInUser.UserName = result.UserName;
+                LoggedInUser.Email = result.Email;
+                LoggedInUser.Balance = result.Balance;
+
                 NavManager.NavigateTo("/bet-placement");
             }
             else
             {
                 IsErrorMessageVisible = true;
-                ErrorMessage = "Korisničko ime ili lozinka nisu točni.";
+                ErrorMessage = "User name or password is not correct.";
                 loginUsername = "";
                 loginPassword = "";
             }
@@ -102,6 +170,12 @@
             throw;
         }
     }
+
+    // private void Skip()
+    // {
+    //     LoggedInUser.Id = 1;
+    //     NavManager.NavigateTo("/bet-placement");
+    // }
 
     private void Register()
     {
@@ -114,7 +188,7 @@
             if (result is not null)
             {
                 IsErrorMessageVisible = true;
-                ErrorMessage = "Korisničko ime već postoji!";
+                ErrorMessage = "User name already in use!";
                 return;
             }
 
@@ -126,11 +200,10 @@
                 };
 
             userService.CreateUser(user);
-            IsRegistered = true;
-            var result2 = userService.Login(user.UserName, user.Password);
-            LoggedInUser.Id = result2.Id;
-            NavManager.NavigateTo("/bet-placement");
 
+            loginUsername = registrationModel.UserName;
+            loginPassword = registrationModel.Password;
+            Login();
         }
         catch (Exception ex)
         {

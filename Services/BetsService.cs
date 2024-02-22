@@ -21,5 +21,10 @@ namespace PhBet5.Services
         {
             return _context.Bets.Where(u => u.BetSport == sport).ToList();
         }
+
+        public BetsModel GetBet(int id)
+        {
+            return _context.Bets.FirstOrDefault(u => u.BetId == id);
+        }
     }
 }

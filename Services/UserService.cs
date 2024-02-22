@@ -31,5 +31,16 @@ namespace PhBet5.Services
         {
             return _context.Users.FirstOrDefault(u => u.UserName == username && u.Password == password);
         }
+
+        public void UpdateUser(int id, UserModel user)
+        {
+            UserModel userModel = _context.Users.FirstOrDefault(user => user.Id == id);
+            if (userModel != null)
+            {
+                userModel.Balance = user.Balance;
+
+                _context.SaveChanges();
+            }
+        }
     }
 }
